@@ -1,0 +1,25 @@
+{
+    "name": "thomas-institut/timestring",
+    "type": "library",
+    "description": "Dealing with MySql datetime strings with microseconds",
+    "keywords": ["data"],
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Rafael Nájera",
+            "email": "rafael.najera@uni-koeln.de",
+            "homepage": "http://rafaelnajera.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.4",
+    },
+    "autoload": {
+        "psr-4": {
+            "ThomasInstitut\\TimeString\\": "TimeString"
+        }
+    }
+}
