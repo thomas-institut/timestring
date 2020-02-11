@@ -123,4 +123,26 @@ class TimeString
         return true;
     }
 
+    /**
+     * Encodes a timeString into a compact representation containing only numbers
+     *
+     * @param string $timeString
+     * @return string
+     */
+    public static function compactEncode(string $timeString) : string {
+
+        $parts = [];
+        preg_match('/^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\.(\d\d\d\d\d\d)$/', $timeString, $parts);
+
+        return implode('', array_slice($parts,1));
+    }
+
+    public static function compactDecode(string $compactTimeString) : string  {
+        $parts = [];
+        preg_match('/^(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d\d\d\d\d)$/', $compactTimeString, $parts);
+
+        return $parts[1] . '-' . $parts[2] . '-' . $parts[3] . ' ' . $parts[4] . ':' . $parts[5] . ':' . $parts[6] . '.' . $parts[7];
+    }
+
+
 }
