@@ -23,6 +23,28 @@ class TimeStringTest extends TestCase
             $compactNow = TimeString::compactEncode($now);
             $this->assertEquals($now, TimeString::compactDecode($compactNow));
         }
+    }
+
+    public function testDateTime() {
+        $timeString1 = TimeString::fromString('2020-03-06');
+
+        $exceptionCaught = false;
+        try {
+            $dateTime = TimeString::createDateTime($timeString1);
+        } catch (\Exception $e) {
+            $exceptionCaught = true;
+        }
+        $this->assertFalse($exceptionCaught);
+
+        $this->assertEquals('2020', $dateTime->format('Y'));
+
+    }
+
+    public function testFormat() {
+        $timeString1 = TimeString::fromString('2020-03-06');
+
+        $this->assertEquals('2020', TimeString::format($timeString1, 'Y'));
+        $this->assertEquals('March', TimeString::format($timeString1, 'F'));
 
     }
 }

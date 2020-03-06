@@ -20,6 +20,9 @@
 
 namespace ThomasInstitut\TimeString;
 
+use DateTime;
+use Exception;
+
 /**
  * Class TimeString
  *
@@ -137,6 +140,12 @@ class TimeString
         return implode('', array_slice($parts,1));
     }
 
+    /**
+     * Decodes a compact representation of a timeString into a normal timeString
+     *
+     * @param string $compactTimeString
+     * @return string
+     */
     public static function compactDecode(string $compactTimeString) : string  {
         $parts = [];
         preg_match('/^(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d\d\d\d\d)$/', $compactTimeString, $parts);
@@ -144,5 +153,31 @@ class TimeString
         return $parts[1] . '-' . $parts[2] . '-' . $parts[3] . ' ' . $parts[4] . ':' . $parts[5] . ':' . $parts[6] . '.' . $parts[7];
     }
 
+    /**
+     * Creates a DateTime object from a timeString
+     *
+     * @param string $timeString
+     * @return DateTime
+     * @throws Exception
+     */
+    public static function createDateTime(string $timeString) : DateTime {
+        return new DateTime($timeString);
+    }
+
+    /**
+     *
+     * @param string $timeString
+     * @param string $format
+     * @return string
+     */
+    public static function format(string $timeString, string $format) : string {
+
+        try {
+            $dateTime = self::createDateTime($timeString);
+        } catch (Exception $e) {
+            return '????';
+        }
+        return $dateTime->format($format);
+    }
 
 }
