@@ -4,6 +4,7 @@
 namespace ThomasInstitut\TimeString;
 
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 
 class TimeStringTest extends TestCase
@@ -31,7 +32,7 @@ class TimeStringTest extends TestCase
         $exceptionCaught = false;
         try {
             $dateTime = TimeString::createDateTime($timeString1);
-        } catch (\Exception $e) {
+        } catch (Exception) {
             $exceptionCaught = true;
         }
         $this->assertFalse($exceptionCaught);
@@ -45,6 +46,68 @@ class TimeStringTest extends TestCase
 
         $this->assertEquals('2020', TimeString::format($timeString1, 'Y'));
         $this->assertEquals('March', TimeString::format($timeString1, 'F'));
+    }
+
+    public function testFromTimestampWithTimezones() {
+        $systemTimeZone = date_default_timezone_get();
+
+        $timeZones = [
+            'Europe/Berlin',
+            'UTC',
+            'America/Costa_Rica'
+            ];
+        $now = time();
+        $systemTimeString = TimeString::fromTimeStamp($now);
+        foreach($timeZones as $tz) {
+
+            $timeString = TimeString::fromTimeStamp($now, $tz);
+
+            if ($tz === $systemTimeZone) {
+                $this->assertEquals($systemTimeString, $timeString);
+            } else {
+                $this->assertNotEquals($systemTimeString, $timeString);
+            }
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testToTimeStamp() {
+
+        $timeStamp = microtime(true);
+        $testTimeStringTimeZones = [
+            'America/Argentina/Buenos_Aires',
+            'Asia/Tokyo',
+            'UTC',
+            'Europe/Berlin'
+        ];
+
+        foreach($testTimeStringTimeZones as $tz) {
+            $timeString = TimeString::fromTimeStamp($timeStamp, $tz);
+            $this->assertEquals(floor($timeStamp * 1000), floor(TimeString::toTimeStamp($timeString, $tz) * 1000));
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testFormatWithTimeZones() {
+
+        $testTimeStringTimeZones = [
+            'America/Argentina/Buenos_Aires',
+            'Asia/Tokyo',
+            'UTC',
+            'Europe/Berlin'
+        ];
+        foreach($testTimeStringTimeZones as $timeStringTimeZone) {
+            $nowTimeString = TimeString::now($timeStringTimeZone);
+            $hourUTC = intval(TimeString::format($nowTimeString, 'H', $timeStringTimeZone, 'UTC'));
+            $hourNonUTC = intval(TimeString::format($nowTimeString, 'H', $timeStringTimeZone, '-06:00'));
+            $hourDiff = $hourUTC > $hourNonUTC ? $hourUTC - $hourNonUTC : $hourUTC - ($hourNonUTC - 24);
+            $this->assertNotEquals($hourUTC, $hourNonUTC);
+            $this->assertEquals(6, $hourDiff);
+        }
 
     }
 }
