@@ -32,6 +32,12 @@ class TimeStringTest extends TestCase
         }
     }
 
+    public function testCloning() {
+        $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
+        $timeString2 = clone $timeString1;
+        $this->assertTrue(TimeString::equals($timeString1, $timeString2));
+    }
+
     public function testConstants() {
         $this->assertEquals(TimeString::END_OF_TIMES, (new TimeString(TimeString::END_OF_TIMES))->toString());
         $this->assertEquals(TimeString::TIME_ZERO, (new TimeString(TimeString::TIME_ZERO))->toString());

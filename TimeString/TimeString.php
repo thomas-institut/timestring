@@ -169,19 +169,22 @@ class TimeString
      * is numeric (i.e., a timestamp). It will be ignored if the input variable is
      * a string.
      *
-     * @param float|int|string $timeVar
+     * @param float|int|string|DateTime $timeVar
      * @param string $timeZone
      * @return TimeString
-     * @throws MalformedStringException
      * @throws InvalidTimeString
+     * @throws MalformedStringException
      */
-    public static function fromVariable(float|int|string $timeVar, string $timeZone = '') : TimeString
+    public static function fromVariable(float|int|string|DateTime $timeVar, string $timeZone = '') : TimeString
     {
         if (is_numeric($timeVar)) {
             return self::fromTimeStamp((float) $timeVar, $timeZone);
         }
         if (is_string($timeVar)) {
             return  self::fromString($timeVar);
+        }
+        if (is_a($timeVar, DateTime::class)) {
+            return self::fromDateTime($timeVar);
         }
         throw new InvalidTimeString("TimeString cannot be created from '$timeVar'");
     }
@@ -332,7 +335,8 @@ class TimeString
     }
 
     /**
-     * Returns a formatted date/time from the given TimeString.
+     * Returns a formatted date/time from the given TimeString using the formats defined
+     * in PHP's DateTime interface (https://www.php.net/manual/en/datetime.format.php)
      *
      * The time zone of the TimeString is given with $timeStringTimeZone. If it is an empty string
      * it is assumed that the TimeString represents a time in PHP's default time zone.
