@@ -1,6 +1,6 @@
 <?php
 
-namespace ThomasInstitut\TimeString;
+namespace ThomasInstitut\TimeString\Exception;
 
 use Exception;
 

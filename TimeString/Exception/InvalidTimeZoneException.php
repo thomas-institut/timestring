@@ -1,6 +1,6 @@
 <?php
 
-namespace ThomasInstitut\TimeString;
+namespace ThomasInstitut\TimeString\Exception;
 
 /**
  * Exception thrown when a given time zone string is invalid

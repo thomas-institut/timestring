@@ -1,41 +1,73 @@
 <?php
 
 
-namespace ThomasInstitut\TimeString;
+namespace ThomasInstitut\TimeString\Test;
 
 
 use Exception;
 use PHPUnit\Framework\TestCase;
+use ThomasInstitut\TimeString\Exception\InvalidTimeString;
+use ThomasInstitut\TimeString\Exception\InvalidTimeZoneException;
+use ThomasInstitut\TimeString\Exception\MalformedStringException;
+use ThomasInstitut\TimeString\TimeString;
 
 class TimeStringTest extends TestCase
 {
 
+    /**
+     * @throws MalformedStringException
+     */
     public function testEncode() {
 
-        $timeString1 = '2019-12-21 13:45:19.123456';
+        $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
         $compactTimeString1 = '20191221134519123456';
-        $this->assertEquals($compactTimeString1, TimeString::compactEncode($timeString1));
-        $this->assertEquals($timeString1, TimeString::compactDecode($compactTimeString1));
-
+        $this->assertEquals($compactTimeString1, $timeString1->toCompactString());
+        $this->assertTrue(TimeString::equals($timeString1, TimeString::fromCompactString($compactTimeString1)));
         $nIterations = 10;
 
         for($i = 0; $i < $nIterations; $i++) {
             $now = TimeString::now();
-            $compactNow = TimeString::compactEncode($now);
-            $this->assertEquals($now, TimeString::compactDecode($compactNow));
+            $compactStringNow = $now->toCompactString();
+            $this->assertTrue(TimeString::equals($now, TimeString::fromCompactString($compactStringNow)));
+        }
+    }
+
+    public function testConstants() {
+        $this->assertEquals(TimeString::END_OF_TIMES, (new TimeString(TimeString::END_OF_TIMES))->toString());
+        $this->assertEquals(TimeString::TIME_ZERO, (new TimeString(TimeString::TIME_ZERO))->toString());
+    }
+
+
+    /**
+     * @throws InvalidTimeString
+     * @throws MalformedStringException
+     * @throws InvalidTimeZoneException
+     */
+    public function testFromVariable() {
+
+        $nowTimestamp = time();
+        $nowTimeString = TimeString::fromTimeStamp($nowTimestamp);
+
+        $vars = [];
+        $vars[] = $nowTimeString->toString();
+        $vars[] = $nowTimeString->toTimeStamp();
+        $vars[] = intval($nowTimeString->toTimeStamp());
+
+        foreach ($vars as $var) {
+            $msg = "Test from variable: $var";
+            $this->assertEquals($nowTimeString->toString(), TimeString::fromVariable($var)->toString(), $msg);
         }
     }
 
     /**
      * @throws MalformedStringException
-     * @throws InvalidTimeZoneException
      */
     public function testDateTime() {
         $timeString1 = TimeString::fromString('2020-03-06');
 
         $exceptionCaught = false;
         try {
-            $dateTime = TimeString::toDateTime($timeString1);
+            $dateTime = $timeString1->toDateTime();
         } catch (Exception) {
             $exceptionCaught = true;
         }
@@ -59,26 +91,22 @@ class TimeStringTest extends TestCase
         ];
 
         foreach ($testCases as $testCase) {
-            [ $testString, $timeZone, $valid, $expectedTimeString] = $testCase;
-            $testMsg = "Testing TimeString '$testString'";
-            $invalidTimeZoneExceptionCaught = false;
+            [ $testString, , $valid, $expectedTimeString] = $testCase;
+            $testMsg = "Testing input string '$testString'";
             $malformedStringExceptionCaught = false;
             try {
                 $timeString = TimeString::fromString($testString);
-            } catch (InvalidTimeZoneException) {
-                $invalidTimeZoneExceptionCaught = true;
+                $this->assertEquals($expectedTimeString, $timeString->toString(), $testMsg);
             } catch (MalformedStringException) {
                 $malformedStringExceptionCaught = true;
             }
-            $this->assertFalse($invalidTimeZoneExceptionCaught, $testMsg);
             $this->assertEquals(!$valid, $malformedStringExceptionCaught, $testMsg);
-            if ($valid) {
-                $this->assertTrue(isset($timeString), $testMsg);
-                $this->assertEquals($expectedTimeString, $timeString, $testMsg);
-            }
         }
     }
 
+    /**
+     * @throws MalformedStringException
+     */
     public function testConvertTimeZones() {
 
         $testCases = [
@@ -93,33 +121,29 @@ class TimeStringTest extends TestCase
             [ $testTimeString, $testTimeZone, $expectedConvertedTimeString, $newTimeZone]  = $testCase;
             $testMsg = "Testing $testTimeString @ $testTimeZone to $newTimeZone";
             $exceptionCaught = false;
+            $timeString = TimeString::fromString($testTimeString);
             try {
-                $convertedTimeString = TimeString::toNewTimeZone($testTimeString, $newTimeZone, $testTimeZone);
-            } catch (InvalidTimeString|InvalidTimeZoneException) {
+                $convertedTimeString = $timeString->toNewTimeZone($newTimeZone, $testTimeZone);
+                $this->assertEquals($expectedConvertedTimeString, $convertedTimeString->toString(), $testMsg);
+            } catch (InvalidTimeZoneException) {
                 $exceptionCaught = true;
             }
             $this->assertFalse($exceptionCaught, $testMsg);
-            if (isset($convertedTimeString)) {
-                $this->assertEquals($expectedConvertedTimeString, $convertedTimeString, $testMsg);
-            }
+
         }
     }
 
     /**
      * @throws InvalidTimeZoneException
      * @throws MalformedStringException
-     * @throws InvalidTimeString
      */
     public function testFormat() {
         $timeString1 = TimeString::fromString('2020-03-06');
 
-        $this->assertEquals('2020', TimeString::format($timeString1, 'Y'));
-        $this->assertEquals('March', TimeString::format($timeString1, 'F'));
+        $this->assertEquals('2020', $timeString1->format('Y'));
+        $this->assertEquals('March', $timeString1->format('F'));
     }
 
-    /**
-     * @throws InvalidTimeZoneException
-     */
     public function testFromTimestampWithTimezones() {
         $systemTimeZone = date_default_timezone_get();
 
@@ -128,16 +152,14 @@ class TimeStringTest extends TestCase
             'UTC',
             'America/Costa_Rica'
             ];
-        $now = time();
-        $systemTimeString = TimeString::fromTimeStamp($now);
+        $nowTimestamp = time();
+        $systemTimeString = TimeString::fromTimeStamp($nowTimestamp);
         foreach($timeZones as $tz) {
-
-            $timeString = TimeString::fromTimeStamp($now, $tz);
-
+            $timeString = TimeString::fromTimeStamp($nowTimestamp, $tz);
             if ($tz === $systemTimeZone) {
-                $this->assertEquals($systemTimeString, $timeString);
+                $this->assertEquals($systemTimeString->toString(), $timeString->toString());
             } else {
-                $this->assertNotEquals($systemTimeString, $timeString);
+                $this->assertNotEquals($systemTimeString->toString(), $timeString->toString());
             }
         }
     }
@@ -146,7 +168,6 @@ class TimeStringTest extends TestCase
      * @throws Exception
      */
     public function testToTimeStamp() {
-
         $timeStamp = microtime(true);
         $testTimeStringTimeZones = [
             'America/Argentina/Buenos_Aires',
@@ -154,10 +175,9 @@ class TimeStringTest extends TestCase
             'UTC',
             'Europe/Berlin'
         ];
-
         foreach($testTimeStringTimeZones as $tz) {
             $timeString = TimeString::fromTimeStamp($timeStamp, $tz);
-            $this->assertEquals($timeStamp, TimeString::toTimeStamp($timeString, $tz));
+            $this->assertEquals($timeStamp, $timeString->toTimeStamp($tz));
         }
     }
 
@@ -174,8 +194,8 @@ class TimeStringTest extends TestCase
         ];
         foreach($testTimeStringTimeZones as $timeStringTimeZone) {
             $nowTimeString = TimeString::now($timeStringTimeZone);
-            $hourUTC = intval(TimeString::format($nowTimeString, 'H', $timeStringTimeZone, 'UTC'));
-            $hourNonUTC = intval(TimeString::format($nowTimeString, 'H', $timeStringTimeZone, '-06:00'));
+            $hourUTC = intval($nowTimeString->format( 'H', $timeStringTimeZone, 'UTC'));
+            $hourNonUTC = intval($nowTimeString->format('H', $timeStringTimeZone, '-06:00'));
             $hourDiff = $hourUTC > $hourNonUTC ? $hourUTC - $hourNonUTC : $hourUTC - ($hourNonUTC - 24);
             $this->assertNotEquals($hourUTC, $hourNonUTC);
             $this->assertEquals(6, $hourDiff);
