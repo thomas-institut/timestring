@@ -20,7 +20,7 @@ TimeString objects can be constructed from strings, float or integer timestamps,
 or DateTime objects. 
 
 Strings given to the constructor can be partial or complete MySQL datetime values or any
-format accepted by PHP's DateTime class.
+format accepted by PHP's DateTime class. Empty strings are not allowed. 
 
 ```php
 $ts = new TimeString('1999-12-31 23:59:50.123456');
@@ -34,6 +34,10 @@ $ts = new TimeString('1999-12-31');
 
 $ts = new TimeString('December 31, 1999');
 // inner value is '1999-12-31 00:00:00.000000'
+
+// but
+$ts = new TimeString('');
+// throws InvalidArgumentException
 ```
 
 Floats and integers are understood as Unix timestamps. An additional parameter
@@ -71,8 +75,8 @@ $timeString->toString()
 strval($timeString)  
 // '1999-12-31 23:59:50.123456'
 
-$timeString->format('Y-M') 
-// '1999-12'
+$timeString->format('d F Y') 
+// '31 December 1999'
 ```
 
 TimeString objects can be transformed into other types:

@@ -200,16 +200,16 @@ class TimeString
         // first, add missing time and microseconds if the string is only a date or
         // only a date and time
         if (preg_match('/^\d\d\d\d-\d\d-\d\d$/', $str)) {
-            if (preg_match('/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/', $str)) {
-                $str .= '.000000';
-            } else {
-                $str .= ' 00:00:00.000000';
-            }
-            if (self::isValid($str)) {
-                return $str;
-            }
-            throw new InvalidArgumentException("String '$str' not a valid MySQL time string");
+            $str .= ' 00:00:00.000000';
         }
+
+        if (preg_match('/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/', $str)) {
+            $str .= '.000000';
+        }
+        if (self::isValidMySqlDateTime($str)) {
+            return $str;
+        }
+
         try {
             $dt = new DateTime($str);
             return self::fromDateTime($dt);
@@ -223,7 +223,7 @@ class TimeString
         if ($timeZone === '') {
             $dtz = timezone_open(date_default_timezone_get());
             if ($dtz === false) {
-                throw new RuntimeException("PHP reported an invalid default timezone");
+                throw new RuntimeException("PHP reported an invalid default timezone"); // @codeCoverageIgnore
             }
         } else {
             $dtz = @timezone_open($timeZone);
@@ -235,16 +235,13 @@ class TimeString
     }
 
     /**
-     * Returns true if the given string can be used to create a TimeString object
+     * Returns true if the given string is a valid MySQL datetime string
      *
      * @param string $str
      * @return bool
      */
-    public static function isValid(string $str) : bool
+    private static function isValidMySqlDateTime(string $str) : bool
     {
-        if ($str === '') {
-            return false;
-        }
         $matches = [];
         if (preg_match('/^\d\d\d\d-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\.\d\d\d\d\d\d$/', $str, $matches) !== 1) {
             return false;
@@ -327,7 +324,9 @@ class TimeString
         $dateTimeZone = self::getTimeZoneFromString($timeZone);
         $dt = DateTime::createFromFormat("Y-m-d H:i:s.u", $this->theActualTimeString, $dateTimeZone);
         if ($dt === false) {
+            // @codeCoverageIgnoreStart
             throw new RuntimeException("Invalid time string exception when creating DateTime object");
+            // @codeCoverageIgnoreEnd
         }
         return $dt;
     }

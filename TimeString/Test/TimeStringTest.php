@@ -3,6 +3,7 @@
 
 namespace ThomasInstitut\TimeString\Test;
 
+use DateTime;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use ThomasInstitut\TimeString\TimeString;
@@ -100,6 +101,11 @@ class TimeStringTest extends TestCase
             [ '',  false, ''],
             [ '1971-01-28', true, '1971-01-28 00:00:00.000000'],
             [ '1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'],
+            [ '1971-01-48 00:00:00.000000', false, ''],
+            [ '1971-25-28 00:00:00.000000', false, ''],
+            [ '1971-01-28 00:00:85.000000', false, ''],
+            [ '1971-01-28 00:85:00.000000', false, ''],
+            [ '1971-01-28 28:00:00.000000', false, ''],
             [ 'Jan 28, 1971', true, '1971-01-28 00:00:00.000000'],
             [ 'Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'],
             [ '28 January 1971', true, '1971-01-28 00:00:00.000000'],
@@ -109,7 +115,7 @@ class TimeStringTest extends TestCase
 
         foreach ($testCases as $testCase) {
             [ $testString, $valid, $expected ] = $testCase;
-            $testMsg = "Testing input string '$testString'";
+            $testMsg = "Testing '$testString'";
             $exceptionCaught = false;
             try {
                 $timeString = new TimeString($testString);
@@ -201,13 +207,25 @@ class TimeStringTest extends TestCase
         $nowTimestamp = time();
         $systemTimeString = TimeString::fromTimeStamp($nowTimestamp);
         foreach ($timeZones as $tz) {
-            $timeString = TimeString::fromTimeStamp($nowTimestamp, $tz);
+            $timeString = new TimeString($nowTimestamp, $tz);
             if ($tz === $systemTimeZone) {
                 $this->assertEquals($systemTimeString->toString(), $timeString->toString());
             } else {
                 $this->assertNotEquals($systemTimeString->toString(), $timeString->toString());
             }
         }
+    }
+
+    public function testFromDateTime()
+    {
+        $dt = new DateTime();
+        $ts1 = TimeString::fromDateTime($dt);
+        $ts2 = new TimeString($dt);
+        $ts3 = TimeString::fromVariable($dt);
+        $this->assertTrue(TimeString::equals($ts1, $ts2));
+        $this->assertTrue(TimeString::equals($ts1, $ts3));
+
+        print "$ts1 $ts2 $ts3\n";
     }
 
     /**
