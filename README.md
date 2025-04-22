@@ -5,7 +5,7 @@
 
 ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fthomas-institut%2Ftimestring%2Frefs%2Fheads%2Fmaster%2Fcomposer.json&query=%24.require.php&label=PHP%20Version)
 
-A TimeString is an immutable object that holds a string with a MySql datetime value with microseconds, 
+A TimeString is an immutable object that holds a string with a MySQL datetime value with microseconds, 
 e.g., `'1999-12-31 23:59:50.123456'`. No timezone information is stored in the class.
 
 
