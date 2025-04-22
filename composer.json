@@ -1,7 +1,7 @@
 {
     "name": "thomas-institut/timestring",
     "type": "library",
-    "description": "Dealing with MySql datetime strings with microseconds",
+    "description": "A class to deal with MySQL datetime strings with microseconds",
     "keywords": ["data"],
     "license": "GPL-3.0-or-later",
     "authors": [
@@ -10,16 +10,18 @@
             "email": "rafael.najera@uni-koeln.de"
         }
     ],
+    "scripts": {
+        "test" : "php -d xdebug.mode=off vendor/bin/phpunit TimeString/Test",
+        "coverage": "php -dxdebug.coverage_enable=1 -dxdebug.mode=coverage vendor/bin/phpunit --coverage-html coverage --coverage-filter TimeString TimeString",
+        "phpcs": "phpcs --standard=PSR2 TimeString",
+        "phpcbf": "phpcbf --standard=PSR2 TimeString"
+    },
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.3"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.5.7"
-    },
-    "config": {
-        "platform": {
-            "php": "8.1.2"
-        }
+        "phpunit/phpunit": "^12.1",
+        "squizlabs/php_codesniffer": "^3.12"
     },
     "autoload": {
         "psr-4": {
