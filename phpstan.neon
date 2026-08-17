@@ -1,0 +1,4 @@
+# phpstan.neon
+parameters:
+    level: 7
+    phpVersion: 80300 # Targets PHP 8.3

@@ -62,9 +62,7 @@ class TimeString
         }
         if (is_int($var) || is_float($var)) {
             $this->theActualTimeString = self::tsToMySqlTimeString(floatval($var), $timeZone);
-        }
-
-        if (is_a($var, DateTime::class)) {
+        } elseif (is_a($var, DateTime::class)) {
             $this->theActualTimeString = $var->format(self::TIME_STRING_FORMAT);
         }
     }
@@ -111,7 +109,7 @@ class TimeString
     {
         $intTime =  floor($timeStamp);
         $dt =new DateTime();
-        $dt->setTimestamp($intTime);
+        $dt->setTimestamp(intval($intTime));
         if ($timeZone !== '') {
             $dt->setTimezone(self::getTimeZoneFromString($timeZone));
         }
@@ -168,6 +166,7 @@ class TimeString
         if (is_string($timeVar)) {
             return  self::fromString($timeVar);
         }
+        // @phpstan-ignore-next-line
         if (is_a($timeVar, DateTime::class)) {
             return self::fromDateTime($timeVar);
         }
@@ -218,7 +217,7 @@ class TimeString
         }
     }
 
-    private static function getTimeZoneFromString(string $timeZone) : ?DateTimeZone
+    private static function getTimeZoneFromString(string $timeZone) : DateTimeZone
     {
         if ($timeZone === '') {
             $dtz = timezone_open(date_default_timezone_get());

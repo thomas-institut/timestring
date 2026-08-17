@@ -1,18 +1,17 @@
 <?php
 
 
-namespace ThomasInstitut\TimeString\Test;
+namespace ThomasInstitut\TimeString;
 
 use DateTime;
 use Exception;
 use PHPUnit\Framework\TestCase;
-use ThomasInstitut\TimeString\TimeString;
 
 class TimeStringTest extends TestCase
 {
 
 
-    public function testEncode()
+    public function testEncode(): void
     {
 
         $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
@@ -28,14 +27,14 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testCloning()
+    public function testCloning(): void
     {
         $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
         $timeString2 = clone $timeString1;
         $this->assertTrue(TimeString::equals($timeString1, $timeString2));
     }
 
-    public function testConstants()
+    public function testConstants(): void
     {
         $this->assertEquals(
             TimeString::endOfTimes()->toString(),
@@ -48,7 +47,7 @@ class TimeStringTest extends TestCase
     }
 
 
-    public function testFromVariable()
+    public function testFromVariable(): void
     {
 
         $nowTimestamp = time();
@@ -65,24 +64,24 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testDateTime()
+    public function testDateTime(): void
     {
         $timeString1 = TimeString::fromString('2020-03-06');
         $dateTime = $timeString1->toDateTime();
         $this->assertEquals('2020', $dateTime->format('Y'));
     }
 
-    public function testBadTimezone()
+    public function testBadTimezone(): void
     {
 
         $testCases = [
             // timezone, valid
-            [ 'Europe/London', true ],
-            [ 'Bad/Timezone', false]
+            ['Europe/London', true],
+            ['Bad/Timezone', false]
         ];
         $now = time();
         foreach ($testCases as $testCase) {
-            [ $tz, $valid] = $testCase;
+            [$tz, $valid] = $testCase;
             $expectedExceptionCaught = !$valid;
             $exceptionCaught = false;
             try {
@@ -94,27 +93,27 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testConstructor()
+    public function testConstructor(): void
     {
         $testCases = [
             // testString, valid, expected
-            [ '',  false, ''],
-            [ '1971-01-28', true, '1971-01-28 00:00:00.000000'],
-            [ '1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'],
-            [ '1971-01-48 00:00:00.000000', false, ''],
-            [ '1971-25-28 00:00:00.000000', false, ''],
-            [ '1971-01-28 00:00:85.000000', false, ''],
-            [ '1971-01-28 00:85:00.000000', false, ''],
-            [ '1971-01-28 28:00:00.000000', false, ''],
-            [ 'Jan 28, 1971', true, '1971-01-28 00:00:00.000000'],
-            [ 'Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'],
-            [ '28 January 1971', true, '1971-01-28 00:00:00.000000'],
-            [ 'cats and dogs', false, ''],
-            [ '28 Yan 1971', false, ''],
+            ['', false, ''],
+            ['1971-01-28', true, '1971-01-28 00:00:00.000000'],
+            ['1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'],
+            ['1971-01-48 00:00:00.000000', false, ''],
+            ['1971-25-28 00:00:00.000000', false, ''],
+            ['1971-01-28 00:00:85.000000', false, ''],
+            ['1971-01-28 00:85:00.000000', false, ''],
+            ['1971-01-28 28:00:00.000000', false, ''],
+            ['Jan 28, 1971', true, '1971-01-28 00:00:00.000000'],
+            ['Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'],
+            ['28 January 1971', true, '1971-01-28 00:00:00.000000'],
+            ['cats and dogs', false, ''],
+            ['28 Yan 1971', false, ''],
         ];
 
         foreach ($testCases as $testCase) {
-            [ $testString, $valid, $expected ] = $testCase;
+            [$testString, $valid, $expected] = $testCase;
             $testMsg = "Testing '$testString'";
             $exceptionCaught = false;
             try {
@@ -131,24 +130,24 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFromString()
+    public function testFromString(): void
     {
 
         date_default_timezone_set('UTC');
         $testCases = [
             // testString, time zone, valid, expected TimeString
-            [ '', '', false, ''],
-            [ '1971-01-28', '', true, '1971-01-28 00:00:00.000000'],
-            [ '1971-01-28 00:00:00', '', true, '1971-01-28 00:00:00.000000'],
-            [ 'Jan 28, 1971', '', true, '1971-01-28 00:00:00.000000'],
-            [ 'Jan 28, 1971 3:00pm', 'America/Costa_Rica', true, '1971-01-28 15:00:00.000000'],
-            [ '28 January 1971', '', true, '1971-01-28 00:00:00.000000'],
-            [ 'cats and dogs', '',  false, ''],
-            [ '28 Yan 1971', '', false, ''],
+            ['', '', false, ''],
+            ['1971-01-28', '', true, '1971-01-28 00:00:00.000000'],
+            ['1971-01-28 00:00:00', '', true, '1971-01-28 00:00:00.000000'],
+            ['Jan 28, 1971', '', true, '1971-01-28 00:00:00.000000'],
+            ['Jan 28, 1971 3:00pm', 'America/Costa_Rica', true, '1971-01-28 15:00:00.000000'],
+            ['28 January 1971', '', true, '1971-01-28 00:00:00.000000'],
+            ['cats and dogs', '', false, ''],
+            ['28 Yan 1971', '', false, ''],
         ];
 
         foreach ($testCases as $testCase) {
-            [ $testString, , $valid, $expectedTimeString] = $testCase;
+            [$testString, , $valid, $expectedTimeString] = $testCase;
             $testMsg = "Testing input string '$testString'";
             $exceptionCaught = null;
             $exceptionMsg = '';
@@ -167,19 +166,19 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testConvertTimeZones()
+    public function testConvertTimeZones(): void
     {
 
         $testCases = [
             // test TimeString, time zone, converted Time String, new Time zone
-            [ '2024-01-22 14:00:00.123456', 'UTC', '2024-01-22 15:00:00.123456',  'Europe/Berlin' ],
-            [ '2017-07-28 21:01:58.791319', 'Europe/Berlin', '2017-07-28 19:01:58.791319',  'UTC' ],
-            [ '2024-01-22 14:32:04.876209', 'UTC', '2024-01-22 08:32:04.876209',  'America/Costa_Rica' ],
-            [ '2024-01-22 16:00:00.664234', 'Europe/Berlin', '2024-01-23 02:00:00.664234',  'Australia/Sydney' ]
-            ];
+            ['2024-01-22 14:00:00.123456', 'UTC', '2024-01-22 15:00:00.123456', 'Europe/Berlin'],
+            ['2017-07-28 21:01:58.791319', 'Europe/Berlin', '2017-07-28 19:01:58.791319', 'UTC'],
+            ['2024-01-22 14:32:04.876209', 'UTC', '2024-01-22 08:32:04.876209', 'America/Costa_Rica'],
+            ['2024-01-22 16:00:00.664234', 'Europe/Berlin', '2024-01-23 02:00:00.664234', 'Australia/Sydney']
+        ];
 
         foreach ($testCases as $testCase) {
-            [ $testTimeString, $testTimeZone, $expectedConvertedTimeString, $newTimeZone]  = $testCase;
+            [$testTimeString, $testTimeZone, $expectedConvertedTimeString, $newTimeZone] = $testCase;
             $testMsg = "Testing $testTimeString @ $testTimeZone to $newTimeZone";
             $timeString = TimeString::fromString($testTimeString);
             $convertedTimeString = $timeString->toNewTimeZone($newTimeZone, $testTimeZone);
@@ -187,7 +186,7 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFormat()
+    public function testFormat() : void
     {
         $timeString1 = TimeString::fromString('2020-03-06');
 
@@ -195,7 +194,7 @@ class TimeStringTest extends TestCase
         $this->assertEquals('March', $timeString1->format('F'));
     }
 
-    public function testFromTimestampWithTimezones()
+    public function testFromTimestampWithTimezones() : void
     {
         $systemTimeZone = date_default_timezone_get();
 
@@ -203,7 +202,7 @@ class TimeStringTest extends TestCase
             'Europe/Berlin',
             'UTC',
             'America/Costa_Rica'
-            ];
+        ];
         $nowTimestamp = time();
         $systemTimeString = TimeString::fromTimeStamp($nowTimestamp);
         foreach ($timeZones as $tz) {
@@ -216,7 +215,7 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFromDateTime()
+    public function testFromDateTime() : void
     {
         $dt = new DateTime();
         $ts1 = TimeString::fromDateTime($dt);
@@ -224,14 +223,12 @@ class TimeStringTest extends TestCase
         $ts3 = TimeString::fromVariable($dt);
         $this->assertTrue(TimeString::equals($ts1, $ts2));
         $this->assertTrue(TimeString::equals($ts1, $ts3));
-
-        print "$ts1 $ts2 $ts3\n";
     }
 
     /**
      * @throws Exception
      */
-    public function testToTimeStamp()
+    public function testToTimeStamp() : void
     {
         $timeStamp = microtime(true);
         $testTimeStringTimeZones = [
@@ -246,7 +243,7 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFormatWithTimeZones()
+    public function testFormatWithTimeZones() : void
     {
 
         $testTimeStringTimeZones = [
