@@ -10,6 +10,12 @@ use PHPUnit\Framework\TestCase;
 class TimeStringTest extends TestCase
 {
 
+    public function testBadArgumentToComposer(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new TimeString(-1);
+    }
+
 
     public function testEncode(): void
     {
@@ -34,18 +40,17 @@ class TimeStringTest extends TestCase
         $this->assertTrue(TimeString::equals($timeString1, $timeString2));
     }
 
-    public function testConstants(): void
-    {
-        $this->assertEquals(
-            TimeString::endOfTimes()->toString(),
-            (new TimeString(TimeString::END_OF_TIMES))->toString()
-        );
-        $this->assertEquals(
-            TimeString::zero()->toString(),
-            (new TimeString(TimeString::TIME_ZERO))->toString()
-        );
-    }
+    public function testConstants() : void {
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::zero()));
+        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::zero()));
 
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::mySqlZero()));
+        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::mySqlZero()));
+
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::mySqlZero(), TimeString::zero()));
+        $this->assertFalse(TimeString::equals(TimeString::mySqlZero(), TimeString::zero()));
+
+    }
 
     public function testFromVariable(): void
     {

@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
 namespace ThomasInstitut\TimeString;
 
 use DateMalformedStringException;
@@ -23,6 +24,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use RuntimeException;
+use Stringable;
 
 /**
  * Class TimeString
@@ -30,18 +32,12 @@ use RuntimeException;
  * A TimeString holds a string with MySql datetime format with microseconds representing a point in
  * time in an undetermined time zone. For example, 2010-10-10 18:21:23.912123.
  *
- *
  * @package TimeString
  */
-class TimeString
+final readonly class TimeString implements Stringable
 {
-
-    const string VERSION = '2.1';
-    const string MYSQL_DATE_FORMAT  = 'Y-m-d H:i:s';
-    const string TIME_STRING_FORMAT = 'Y-m-d H:i:s.u';
-    const string END_OF_TIMES = '9999-12-31 23:59:59.999999';
-    const string TIME_ZERO = '0000-00-00 00:00:00.000000';
-
+    private const string MySqlDateFormat = 'Y-m-d H:i:s';
+    private const string TimeStringFormat = 'Y-m-d H:i:s.u';
     private string $theActualTimeString;
 
     /**
@@ -62,12 +58,19 @@ class TimeString
         }
         if (is_int($var) || is_float($var)) {
             $this->theActualTimeString = self::tsToMySqlTimeString(floatval($var), $timeZone);
-        } elseif (is_a($var, DateTime::class)) {
-            $this->theActualTimeString = $var->format(self::TIME_STRING_FORMAT);
+            return;
         }
+        $this->theActualTimeString = $var->format(self::TimeStringFormat);
+
+        // Notice that PHP will throw a TypeArgument if the wrong type of variable is passed as a parameter
+        // There's no need to check types here.
     }
 
-    public function toString() : string
+    /**
+     * Converts the TimeString to a string representation
+     * @return string
+     */
+    public function toString(): string
     {
         return $this->theActualTimeString;
     }
@@ -78,7 +81,7 @@ class TimeString
     }
 
     /**
-     * Returns a string representing the current time at the given time zone with microsecond
+     * Returns a TimeString for the current time at the given time zone with microsecond
      * precision.
      *
      * If the given time zone string is empty, the current PHP default timezone is used.
@@ -86,7 +89,7 @@ class TimeString
      * @param string $timeZone
      * @return TimeString
      */
-    public static function now(string $timeZone = '') : TimeString
+    public static function now(string $timeZone = ''): TimeString
     {
         return self::fromTimeStamp(microtime(true), $timeZone);
     }
@@ -100,21 +103,31 @@ class TimeString
      * @param string $timeZone
      * @return TimeString
      */
-    public static function fromTimeStamp(float $timeStamp, string $timeZone = '') : TimeString
+    public static function fromTimeStamp(float $timeStamp, string $timeZone = ''): TimeString
     {
         return new TimeString(self::tsToMySqlTimeString($timeStamp, $timeZone));
     }
 
-    private static function tsToMySqlTimeString(float $timeStamp, string $timeZone = '') : string
+    /**
+     * Converts a timestamp to a MySQL time string representation
+     *
+     * @param float $timeStamp
+     * @param string $timeZone
+     * @return string
+     */
+    private static function tsToMySqlTimeString(float $timeStamp, string $timeZone = ''): string
     {
-        $intTime =  floor($timeStamp);
-        $dt =new DateTime();
+        if ($timeStamp < 0) {
+            throw new InvalidArgumentException('Invalid timestamp value');
+        }
+        $intTime = floor($timeStamp);
+        $dt = new DateTime();
         $dt->setTimestamp(intval($intTime));
         if ($timeZone !== '') {
             $dt->setTimezone(self::getTimeZoneFromString($timeZone));
         }
-        $date = $dt->format(self::MYSQL_DATE_FORMAT);
-        $microSeconds = (int) round(($timeStamp - $intTime)*1000000);
+        $date = $dt->format(self::MySqlDateFormat);
+        $microSeconds = (int)round(($timeStamp - $intTime) * 1000000);
         return sprintf("%s.%06d", $date, $microSeconds);
     }
 
@@ -135,11 +148,12 @@ class TimeString
      *
      * If the time zone is empty or is not given, the current PHP default timezone is used.
      *
+     * The result is not predictable if the TimeString represents a time before the Unix epoch.
      *
      * @param string $timeZone
      * @return float
      */
-    public function toTimeStamp(string $timeZone = '') : float
+    public function toTimeStamp(string $timeZone = ''): float
     {
         $dateTime = substr($this->theActualTimeString, 0, 19);
         $microSeconds = substr($this->theActualTimeString, 20);
@@ -148,7 +162,7 @@ class TimeString
     }
 
     /**
-     * Returns a valid timeString if the variable can be converted to a time.
+     * Returns a TimeString if the variable can be converted to a time.
      *
      * The given timeZone will be used to generate the TimeString if the input variable
      * is numeric (i.e., a timestamp). It will be ignored if the input variable is
@@ -158,13 +172,13 @@ class TimeString
      * @param string $timeZone
      * @return TimeString
      */
-    public static function fromVariable(float|int|string|DateTime $timeVar, string $timeZone = '') : TimeString
+    public static function fromVariable(float|int|string|DateTime $timeVar, string $timeZone = ''): TimeString
     {
         if (is_float($timeVar) || is_integer($timeVar)) {
-            return self::fromTimeStamp((float) $timeVar, $timeZone);
+            return self::fromTimeStamp((float)$timeVar, $timeZone);
         }
         if (is_string($timeVar)) {
-            return  self::fromString($timeVar);
+            return self::fromString($timeVar);
         }
         // @phpstan-ignore-next-line
         if (is_a($timeVar, DateTime::class)) {
@@ -190,7 +204,7 @@ class TimeString
         return new TimeString($str);
     }
 
-    private static function stringToMySqlTimeString(string $str) : string
+    private static function stringToMySqlTimeString(string $str): string
     {
         $str = trim($str);
         if ($str === '') {
@@ -217,7 +231,7 @@ class TimeString
         }
     }
 
-    private static function getTimeZoneFromString(string $timeZone) : DateTimeZone
+    private static function getTimeZoneFromString(string $timeZone): DateTimeZone
     {
         if ($timeZone === '') {
             $dtz = timezone_open(date_default_timezone_get());
@@ -239,7 +253,7 @@ class TimeString
      * @param string $str
      * @return bool
      */
-    private static function isValidMySqlDateTime(string $str) : bool
+    private static function isValidMySqlDateTime(string $str): bool
     {
         $matches = [];
         if (preg_match('/^\d\d\d\d-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\.\d\d\d\d\d\d$/', $str, $matches) !== 1) {
@@ -268,7 +282,7 @@ class TimeString
      *
      * @return string
      */
-    public function toCompactString() : string
+    public function toCompactString(): string
     {
 
         $parts = [];
@@ -282,12 +296,12 @@ class TimeString
     }
 
     /**
-     * Decodes a compact representation of a timeString into a string
+     * Decodes a compact string representation of a TimeString into a TimeString
      *
      * @param string $compactTimeString
      * @return TimeString
      */
-    public static function fromCompactString(string $compactTimeString) : TimeString
+    public static function fromCompactString(string $compactTimeString): TimeString
     {
         $parts = [];
         preg_match('/^(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d\d\d\d\d)$/', $compactTimeString, $parts);
@@ -306,19 +320,19 @@ class TimeString
             $parts[6] ?? 'XX',
             '.',
             $parts[7] ?? 'YYY',
-            ]);
+        ]);
         return self::fromString($theString);
     }
 
     /**
-     * Creates a DateTime object from a timeString with the given time zone.
+     * Creates a DateTime object from the TimeString with the given time zone.
      *
      * If the given time zone string is empty, the current PHP default timezone is used.
      *
      * @param string $timeZone
      * @return DateTime
      */
-    public function toDateTime(string $timeZone = '') : DateTime
+    public function toDateTime(string $timeZone = ''): DateTime
     {
         $dateTimeZone = self::getTimeZoneFromString($timeZone);
         $dt = DateTime::createFromFormat("Y-m-d H:i:s.u", $this->theActualTimeString, $dateTimeZone);
@@ -345,7 +359,7 @@ class TimeString
      * @param string $formatTimeZone
      * @return string
      */
-    public function format(string $format, string $timeStringTimezone = '', string $formatTimeZone = '') : string
+    public function format(string $format, string $timeStringTimezone = '', string $formatTimeZone = ''): string
     {
         $formatDateTimeZone = self::getTimeZoneFromString($formatTimeZone);
         $dateTime = $this->toDateTime($timeStringTimezone);
@@ -362,27 +376,74 @@ class TimeString
      * @param string $timeStringTimezone if empty, the time string is assumed to be in PHP's default timezone
      * @return TimeString
      */
-    public function toNewTimeZone(string $newTimeZone, string $timeStringTimezone = '') : TimeString
+    public function toNewTimeZone(string $newTimeZone, string $timeStringTimezone = ''): TimeString
     {
-        return new TimeString($this->format(self::TIME_STRING_FORMAT, $timeStringTimezone, $newTimeZone));
+        return new TimeString($this->format(self::TimeStringFormat, $timeStringTimezone, $newTimeZone));
     }
 
-    public static function cmp(TimeString $timeString1, TimeString $timeString2) : int
+    /**
+     * Compares two TimeStrings
+     *
+     * Returns:
+     * - 0 if the two TimeStrings are equal,
+     * - <0 if the first TimeString is less than the second TimeString
+     * - \>0 if the first TimeString is greater than the second TimeString.
+     *
+     * @param TimeString $timeString1
+     * @param TimeString $timeString2
+     * @return int
+     */
+    public static function cmp(TimeString $timeString1, TimeString $timeString2): int
     {
         return strcmp($timeString1, $timeString2);
     }
-    public static function equals(TimeString $timeString1, TimeString $timeString2) : bool
+
+    /**
+     * Returns true if the two TimeStrings are equal, false otherwise.
+     *
+     * @param TimeString $timeString1
+     * @param TimeString $timeString2
+     * @return bool
+     */
+    public static function equals(TimeString $timeString1, TimeString $timeString2): bool
     {
         return self::cmp($timeString1, $timeString2) === 0;
     }
 
-    public static function zero() : TimeString
+    /**
+     * Returns a TimeString representing the zero time
+     *
+     * The zero time is the earliest possible time that can be represented by a TimeString.
+     *
+     * @return TimeString
+     */
+    public static function zero(): TimeString
     {
-        return new TimeString(self::TIME_ZERO);
+        return new TimeString('0000-00-00 00:00:00.000000');
     }
 
-    public static function endOfTimes() : TimeString
+    /**
+     * Returns a TimeString representing the latest possible time that can be represented by a TimeString
+     *
+     * This is also the latest possible time that can be represented by a datetime column in MySQL.
+     *
+     * @return TimeString
+     */
+    public static function endOfTimes(): TimeString
     {
-        return new TimeString(self::END_OF_TIMES);
+        return new TimeString('9999-12-31 23:59:59.999999');
     }
+
+    /**
+     * Returns a TimeString representing the MySQL zero time
+     *
+     * The MySQL zero time is the earliest possible time that can be represented by a datetime column in MySQL.
+     *
+     * @return TimeString
+     */
+    public static function mySqlZero(): TimeString
+    {
+        return new TimeString('1000-01-01 00:00:00.000000');
+    }
+
 }
