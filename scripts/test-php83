@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Build the image
+docker build -t timestring-dev-php83 -f docker/php83/Dockerfile .
+
+# Run the container
+# No volume mount needed as files are copied into the image for isolation
+docker run --rm timestring-dev-php83

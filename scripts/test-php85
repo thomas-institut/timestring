@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Build the image
+docker build -t apm-publication-api-php85 -f docker/php85/Dockerfile .
+
+# Run the container
+# No volume mount needed as files are copied into the image for isolation
+docker run --rm apm-publication-api-php85
