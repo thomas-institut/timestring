@@ -1,15 +1,18 @@
 <?php
 
-
 namespace ThomasInstitut\TimeString;
 
 use DateTime;
 use Exception;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(TimeString::class)]
 class TimeStringTest extends TestCase
 {
 
+    #[Test]
     public function testBadArgumentToComposer(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -17,6 +20,7 @@ class TimeStringTest extends TestCase
     }
 
 
+    #[Test]
     public function testEncode(): void
     {
 
@@ -33,6 +37,7 @@ class TimeStringTest extends TestCase
         }
     }
 
+    #[Test]
     public function testCloning(): void
     {
         $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
@@ -40,7 +45,9 @@ class TimeStringTest extends TestCase
         $this->assertTrue(TimeString::equals($timeString1, $timeString2));
     }
 
-    public function testConstants() : void {
+    #[Test]
+    public function testConstants(): void
+    {
         $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::postgreSqlEarliestCeTime()));
         $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::postgreSqlEarliestCeTime()));
 
@@ -52,6 +59,7 @@ class TimeStringTest extends TestCase
 
     }
 
+    #[Test]
     public function testFromVariable(): void
     {
 
@@ -69,6 +77,7 @@ class TimeStringTest extends TestCase
         }
     }
 
+    #[Test]
     public function testDateTime(): void
     {
         $timeString1 = TimeString::fromString('2020-03-06');
@@ -76,6 +85,7 @@ class TimeStringTest extends TestCase
         $this->assertEquals('2020', $dateTime->format('Y'));
     }
 
+    #[Test]
     public function testBadTimezone(): void
     {
 
@@ -98,6 +108,7 @@ class TimeStringTest extends TestCase
         }
     }
 
+    #[Test]
     public function testConstructor(): void
     {
         $testCases = [
@@ -135,6 +146,7 @@ class TimeStringTest extends TestCase
         }
     }
 
+    #[Test]
     public function testFromString(): void
     {
 
@@ -171,6 +183,7 @@ class TimeStringTest extends TestCase
         }
     }
 
+    #[Test]
     public function testConvertTimeZones(): void
     {
 
@@ -191,7 +204,8 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFormat() : void
+    #[Test]
+    public function testFormat(): void
     {
         $timeString1 = TimeString::fromString('2020-03-06');
 
@@ -199,7 +213,8 @@ class TimeStringTest extends TestCase
         $this->assertEquals('March', $timeString1->format('F'));
     }
 
-    public function testFromTimestampWithTimezones() : void
+    #[Test]
+    public function testFromTimestampWithTimezones(): void
     {
         $systemTimeZone = date_default_timezone_get();
 
@@ -220,7 +235,8 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFromDateTime() : void
+    #[Test]
+    public function testFromDateTime(): void
     {
         $dt = new DateTime();
         $ts1 = TimeString::fromDateTime($dt);
@@ -233,7 +249,8 @@ class TimeStringTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testToTimeStamp() : void
+    #[Test]
+    public function testToTimeStamp(): void
     {
         $timeStamp = microtime(true);
         $testTimeStringTimeZones = [
@@ -248,7 +265,8 @@ class TimeStringTest extends TestCase
         }
     }
 
-    public function testFormatWithTimeZones() : void
+    #[Test]
+    public function testFormatWithTimeZones(): void
     {
 
         $testTimeStringTimeZones = [
