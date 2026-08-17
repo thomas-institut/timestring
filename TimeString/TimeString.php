@@ -174,7 +174,7 @@ final readonly class TimeString implements Stringable
      */
     public static function fromVariable(float|int|string|DateTime $timeVar, string $timeZone = ''): TimeString
     {
-        if (is_float($timeVar) || is_integer($timeVar)) {
+        if (is_float($timeVar) || is_int($timeVar)) {
             return self::fromTimeStamp((float)$timeVar, $timeZone);
         }
         if (is_string($timeVar)) {

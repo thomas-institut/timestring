@@ -160,7 +160,7 @@ class TimeStringTest extends TestCase
                 $timeString = TimeString::fromString($testString);
                 $this->assertEquals($expectedTimeString, $timeString->toString(), $testMsg);
             } catch (Exception $e) {
-                $exceptionCaught = get_class($e);
+                $exceptionCaught = $e::class;
                 $exceptionMsg = $e->getMessage();
             }
             if ($valid) {
