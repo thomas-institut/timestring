@@ -5,8 +5,12 @@
 
 ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fthomas-institut%2Ftimestring%2Frefs%2Fheads%2Fmaster%2Fcomposer.json&query=%24.require.php&label=PHP%20Version)
 
-A TimeString is an immutable object that holds a string with a MySQL datetime value with microseconds, 
-e.g., `'1999-12-31 23:59:50.123456'`. No timezone information is stored in the class.
+A TimeString is an immutable object that holds a string with the format `YYYY-MM-DD HH:mm:ss.xxxxxx`, that is, a
+date and time with microseconds, without any timezone indication. For example `'1999-12-31 23:59:50.123456'`
+
+It is the same format as MySQL's `datetime(6)` and PostreSQL's  `timestamp(6) without time zone` (for CE dates)
+
+Code has been tested with PHP 8.3, 8.4 and 8.5 at 100% coverage.
 
 
 ## Installation
@@ -118,6 +122,13 @@ $ts = TimeString::fromDateTime($someDateTimeObject);
 
 // or let TimeString figure it out
 $ts = TimeString::fromVariable($someVariable); 
+
+
+// convenient constants
+
+$ts = TimeString::endOfTimes(); // '9999-12-31 23:59:59.999999'
+$ts = TimeString::mySqlEarliestTime(); // '1000-01-01 00:00:00.000000', earliest time supported by MySQL's datetime(6)
+$ts = TimeString::postgreSQLEarliestCeTime(); // '0001-01-01 00:00:00.000000', earliest CE time supported by PostgreSQL's timestamp(6)
 ```
 
 ### Comparison
@@ -137,14 +148,14 @@ $laterTimeString = new TimeString('2000-12-31 23:59:50.123456');
 TimeString::equals($timestring, $laterTimeString); 
 // false
 TimeString::cmp($timestring, $laterTimeString); 
-// 1
+// >0
 
 $earlierTimeString = new TimeString('1998-12-31 23:59:50.123456');
 
 TimeString::equals($timestring, $laterTimeString); 
 // false
 TimeString::cmp($timestring, $laterTimeString); 
-// -1
+// <0
 ```
 
 

@@ -41,14 +41,14 @@ class TimeStringTest extends TestCase
     }
 
     public function testConstants() : void {
-        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::zero()));
-        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::zero()));
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::postgreSqlEarliestCeTime()));
+        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::postgreSqlEarliestCeTime()));
 
-        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::mySqlZero()));
-        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::mySqlZero()));
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::endOfTimes(), TimeString::mySqlEarliestTime()));
+        $this->assertFalse(TimeString::equals(TimeString::endOfTimes(), TimeString::mySqlEarliestTime()));
 
-        $this->assertGreaterThan(0, TimeString::cmp(TimeString::mySqlZero(), TimeString::zero()));
-        $this->assertFalse(TimeString::equals(TimeString::mySqlZero(), TimeString::zero()));
+        $this->assertGreaterThan(0, TimeString::cmp(TimeString::mySqlEarliestTime(), TimeString::postgreSqlEarliestCeTime()));
+        $this->assertFalse(TimeString::equals(TimeString::mySqlEarliestTime(), TimeString::postgreSqlEarliestCeTime()));
 
     }
 

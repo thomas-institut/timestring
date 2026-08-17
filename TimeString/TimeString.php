@@ -410,22 +410,12 @@ final readonly class TimeString implements Stringable
         return self::cmp($timeString1, $timeString2) === 0;
     }
 
-    /**
-     * Returns a TimeString representing the zero time
-     *
-     * The zero time is the earliest possible time that can be represented by a TimeString.
-     *
-     * @return TimeString
-     */
-    public static function zero(): TimeString
-    {
-        return new TimeString('0000-00-00 00:00:00.000000');
-    }
 
     /**
      * Returns a TimeString representing the latest possible time that can be represented by a TimeString
      *
-     * This is also the latest possible time that can be represented by a datetime column in MySQL.
+     * This is also the latest possible time that can be represented by a `datetime(6)` column in MySQL or
+     * `timestamp(6)` column in PostgreSQL.
      *
      * @return TimeString
      */
@@ -435,15 +425,28 @@ final readonly class TimeString implements Stringable
     }
 
     /**
-     * Returns a TimeString representing the MySQL zero time
-     *
-     * The MySQL zero time is the earliest possible time that can be represented by a datetime column in MySQL.
+     * Returns a TimeString representing the earliest possible time that can be represented by a
+     * `datetime(6)` column in MySQL.
      *
      * @return TimeString
      */
-    public static function mySqlZero(): TimeString
+    public static function mySqlEarliestTime(): TimeString
     {
         return new TimeString('1000-01-01 00:00:00.000000');
+    }
+
+    /**
+     * Returns a TimeString representing the earliest possible CE time that can be represented by a
+     * `timestamp(6)` column in PostgreSQL.
+     *
+     * PostgreSQL can represent BCE times with `timestamp(6)`, but TimeString does not support the
+     * 'BC' postfix that PostgreSQL uses.
+     *
+     * @return TimeString
+     */
+    public static function postgreSqlEarliestCeTime(): TimeString
+    {
+        return new TimeString('0001-01-01 00:00:00.000000');
     }
 
 }
