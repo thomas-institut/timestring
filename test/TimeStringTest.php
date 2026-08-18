@@ -6,7 +6,10 @@ namespace ThomasInstitut\TimeString;
 
 use DateTime;
 use Exception;
+use InvalidArgumentException;
+use Iterator;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +20,7 @@ final class TimeStringTest extends TestCase
     #[Test]
     public function testBadArgumentToComposer(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new TimeString(-1);
     }
 
@@ -62,21 +65,22 @@ final class TimeStringTest extends TestCase
     }
 
     #[Test]
-    public function testFromVariable(): void
+    #[DataProvider('fromVariableProvider')]
+    public function testFromVariable(string|float|int $var, string $expected): void
     {
+        $msg = "Test from variable: $var";
+        $this->assertSame($expected, TimeString::fromVariable($var)->toString(), $msg);
+    }
 
-        $nowTimestamp = time();
-        $nowTimeString = TimeString::fromTimeStamp($nowTimestamp);
-
-        $vars = [];
-        $vars[] = $nowTimeString->toString();
-        $vars[] = $nowTimeString->toTimeStamp();
-        $vars[] = intval($nowTimeString->toTimeStamp());
-
-        foreach ($vars as $var) {
-            $msg = "Test from variable: $var";
-            $this->assertSame($nowTimeString->toString(), TimeString::fromVariable($var)->toString(), $msg);
-        }
+    /**
+     * @return Iterator<string, array{(float | int | string), string}>
+     */
+    public static function fromVariableProvider(): Iterator
+    {
+        $nowTimeString = TimeString::fromTimeStamp(time());
+        yield 'string' => [$nowTimeString->toString(), $nowTimeString->toString()];
+        yield 'float' => [$nowTimeString->toTimeStamp(), $nowTimeString->toString()];
+        yield 'integer' => [intval($nowTimeString->toTimeStamp()), $nowTimeString->toString()];
     }
 
     #[Test]
@@ -88,122 +92,129 @@ final class TimeStringTest extends TestCase
     }
 
     #[Test]
-    public function testBadTimezone(): void
+    #[DataProvider('badTimezoneProvider')]
+    public function testBadTimezone(string $tz, bool $valid): void
     {
-
-        $testCases = [
-            // timezone, valid
-            ['Europe/London', true],
-            ['Bad/Timezone', false]
-        ];
         $now = time();
-        foreach ($testCases as $testCase) {
-            [$tz, $valid] = $testCase;
-            $expectedExceptionCaught = !$valid;
-            $exceptionCaught = false;
-            try {
-                TimeString::fromTimeStamp($now, $tz);
-            } catch (Exception) {
-                $exceptionCaught = true;
-            }
-            $this->assertSame($expectedExceptionCaught, $exceptionCaught);
+        $expectedExceptionCaught = !$valid;
+        $exceptionCaught = false;
+        try {
+            TimeString::fromTimeStamp($now, $tz);
+        } catch (Exception) {
+            $exceptionCaught = true;
         }
+        $this->assertSame($expectedExceptionCaught, $exceptionCaught);
+    }
+
+    /**
+     * @return Iterator<string, array{string, bool}>
+     */
+    public static function badTimezoneProvider(): Iterator
+    {
+        yield 'valid timezone' => ['Europe/London', true];
+        yield 'invalid timezone' => ['Bad/Timezone', false];
     }
 
     #[Test]
-    public function testConstructor(): void
+    #[DataProvider('constructorProvider')]
+    public function testConstructor(string $testString, bool $valid, string $expected): void
     {
-        $testCases = [
-            // testString, valid, expected
-            ['', false, ''],
-            ['1971-01-28', true, '1971-01-28 00:00:00.000000'],
-            ['1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'],
-            ['1971-01-48 00:00:00.000000', false, ''],
-            ['1971-25-28 00:00:00.000000', false, ''],
-            ['1971-01-28 00:00:85.000000', false, ''],
-            ['1971-01-28 00:85:00.000000', false, ''],
-            ['1971-01-28 28:00:00.000000', false, ''],
-            ['Jan 28, 1971', true, '1971-01-28 00:00:00.000000'],
-            ['Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'],
-            ['28 January 1971', true, '1971-01-28 00:00:00.000000'],
-            ['cats and dogs', false, ''],
-            ['28 Yan 1971', false, ''],
-        ];
-
-        foreach ($testCases as $testCase) {
-            [$testString, $valid, $expected] = $testCase;
-            $testMsg = "Testing '$testString'";
-            $exceptionCaught = false;
-            try {
-                $timeString = new TimeString($testString);
-                if ($valid) {
-                    $this->assertEquals($expected, $timeString->toString(), $testMsg);
-                }
-            } catch (Exception) {
-                $exceptionCaught = true;
-            }
-            if (!$valid) {
-                $this->assertTrue($exceptionCaught, $testMsg);
-            }
-        }
-    }
-
-    #[Test]
-    public function testFromString(): void
-    {
-
-        date_default_timezone_set('UTC');
-        $testCases = [
-            // testString, time zone, valid, expected TimeString
-            ['', '', false, ''],
-            ['1971-01-28', '', true, '1971-01-28 00:00:00.000000'],
-            ['1971-01-28 00:00:00', '', true, '1971-01-28 00:00:00.000000'],
-            ['Jan 28, 1971', '', true, '1971-01-28 00:00:00.000000'],
-            ['Jan 28, 1971 3:00pm', 'America/Costa_Rica', true, '1971-01-28 15:00:00.000000'],
-            ['28 January 1971', '', true, '1971-01-28 00:00:00.000000'],
-            ['cats and dogs', '', false, ''],
-            ['28 Yan 1971', '', false, ''],
-        ];
-
-        foreach ($testCases as $testCase) {
-            [$testString, , $valid, $expectedTimeString] = $testCase;
-            $testMsg = "Testing input string '$testString'";
-            $exceptionCaught = null;
-            $exceptionMsg = '';
-            try {
-                $timeString = TimeString::fromString($testString);
-                $this->assertEquals($expectedTimeString, $timeString->toString(), $testMsg);
-            } catch (Exception $e) {
-                $exceptionCaught = $e::class;
-                $exceptionMsg = $e->getMessage();
-            }
+        $testMsg = "Testing '$testString'";
+        $exceptionCaught = false;
+        try {
+            $timeString = new TimeString($testString);
             if ($valid) {
-                $this->assertNull($exceptionCaught, "Test String '$testString': exception msg '$exceptionMsg'");
-            } else {
-                $this->assertNotNull($exceptionCaught);
+                $this->assertSame($expected, $timeString->toString(), $testMsg);
             }
+        } catch (Exception) {
+            $exceptionCaught = true;
+        }
+        if (!$valid) {
+            $this->assertTrue($exceptionCaught, $testMsg);
         }
     }
 
-    #[Test]
-    public function testConvertTimeZones(): void
+    /**
+     * @return Iterator<string, array{string, bool, string}>
+     */
+    public static function constructorProvider(): Iterator
     {
+        yield 'empty string' => ['', false, ''];
+        yield 'date' => ['1971-01-28', true, '1971-01-28 00:00:00.000000'];
+        yield 'date and time' => ['1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'];
+        yield 'invalid day' => ['1971-01-48 00:00:00.000000', false, ''];
+        yield 'invalid month' => ['1971-25-28 00:00:00.000000', false, ''];
+        yield 'invalid second' => ['1971-01-28 00:00:85.000000', false, ''];
+        yield 'invalid minute' => ['1971-01-28 00:85:00.000000', false, ''];
+        yield 'invalid hour' => ['1971-01-28 28:00:00.000000', false, ''];
+        yield 'named date' => ['Jan 28, 1971', true, '1971-01-28 00:00:00.000000'];
+        yield 'named date and time' => ['Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'];
+        yield 'long named date' => ['28 January 1971', true, '1971-01-28 00:00:00.000000'];
+        yield 'invalid words' => ['cats and dogs', false, ''];
+        yield 'misspelled month' => ['28 Yan 1971', false, ''];
+    }
 
-        $testCases = [
-            // test TimeString, time zone, converted Time String, new Time zone
-            ['2024-01-22 14:00:00.123456', 'UTC', '2024-01-22 15:00:00.123456', 'Europe/Berlin'],
-            ['2017-07-28 21:01:58.791319', 'Europe/Berlin', '2017-07-28 19:01:58.791319', 'UTC'],
-            ['2024-01-22 14:32:04.876209', 'UTC', '2024-01-22 08:32:04.876209', 'America/Costa_Rica'],
-            ['2024-01-22 16:00:00.664234', 'Europe/Berlin', '2024-01-23 02:00:00.664234', 'Australia/Sydney']
-        ];
-
-        foreach ($testCases as $testCase) {
-            [$testTimeString, $testTimeZone, $expectedConvertedTimeString, $newTimeZone] = $testCase;
-            $testMsg = "Testing $testTimeString @ $testTimeZone to $newTimeZone";
-            $timeString = TimeString::fromString($testTimeString);
-            $convertedTimeString = $timeString->toNewTimeZone($newTimeZone, $testTimeZone);
-            $this->assertEquals($expectedConvertedTimeString, $convertedTimeString->toString(), $testMsg);
+    #[Test]
+    #[DataProvider('fromStringProvider')]
+    public function testFromString(string $testString, bool $valid, string $expectedTimeString): void
+    {
+        date_default_timezone_set('UTC');
+        $testMsg = "Testing input string '$testString'";
+        $exceptionCaught = null;
+        $exceptionMsg = '';
+        try {
+            $timeString = TimeString::fromString($testString);
+            $this->assertSame($expectedTimeString, $timeString->toString(), $testMsg);
+        } catch (Exception $e) {
+            $exceptionCaught = $e::class;
+            $exceptionMsg = $e->getMessage();
         }
+        if ($valid) {
+            $this->assertNull($exceptionCaught, "Test String '$testString': exception msg '$exceptionMsg'");
+        } else {
+            $this->assertNotNull($exceptionCaught);
+        }
+    }
+
+    /**
+     * @return Iterator<string, array{string, bool, string}>
+     */
+    public static function fromStringProvider(): Iterator
+    {
+        yield 'empty string' => ['', false, ''];
+        yield 'date' => ['1971-01-28', true, '1971-01-28 00:00:00.000000'];
+        yield 'date and time' => ['1971-01-28 00:00:00', true, '1971-01-28 00:00:00.000000'];
+        yield 'named date' => ['Jan 28, 1971', true, '1971-01-28 00:00:00.000000'];
+        yield 'named date and time' => ['Jan 28, 1971 3:00pm', true, '1971-01-28 15:00:00.000000'];
+        yield 'long named date' => ['28 January 1971', true, '1971-01-28 00:00:00.000000'];
+        yield 'invalid words' => ['cats and dogs', false, ''];
+        yield 'misspelled month' => ['28 Yan 1971', false, ''];
+    }
+
+    #[Test]
+    #[DataProvider('convertTimeZonesProvider')]
+    public function testConvertTimeZones(
+        string $testTimeString,
+        string $testTimeZone,
+        string $expectedConvertedTimeString,
+        string $newTimeZone
+    ): void
+    {
+        $testMsg = "Testing $testTimeString @ $testTimeZone to $newTimeZone";
+        $timeString = TimeString::fromString($testTimeString);
+        $convertedTimeString = $timeString->toNewTimeZone($newTimeZone, $testTimeZone);
+        $this->assertSame($expectedConvertedTimeString, $convertedTimeString->toString(), $testMsg);
+    }
+
+    /**
+     * @return Iterator<string, array{string, string, string, string}>
+     */
+    public static function convertTimeZonesProvider(): Iterator
+    {
+        yield 'UTC to Berlin' => ['2024-01-22 14:00:00.123456', 'UTC', '2024-01-22 15:00:00.123456', 'Europe/Berlin'];
+        yield 'Berlin to UTC' => ['2017-07-28 21:01:58.791319', 'Europe/Berlin', '2017-07-28 19:01:58.791319', 'UTC'];
+        yield 'UTC to Costa Rica' => ['2024-01-22 14:32:04.876209', 'UTC', '2024-01-22 08:32:04.876209', 'America/Costa_Rica'];
+        yield 'Berlin to Sydney' => ['2024-01-22 16:00:00.664234', 'Europe/Berlin', '2024-01-23 02:00:00.664234', 'Australia/Sydney'];
     }
 
     #[Test]
@@ -216,25 +227,28 @@ final class TimeStringTest extends TestCase
     }
 
     #[Test]
-    public function testFromTimestampWithTimezones(): void
+    #[DataProvider('fromTimestampWithTimezonesProvider')]
+    public function testFromTimestampWithTimezones(string $tz): void
     {
         $systemTimeZone = date_default_timezone_get();
-
-        $timeZones = [
-            'Europe/Berlin',
-            'UTC',
-            'America/Costa_Rica'
-        ];
         $nowTimestamp = time();
         $systemTimeString = TimeString::fromTimeStamp($nowTimestamp);
-        foreach ($timeZones as $tz) {
-            $timeString = new TimeString($nowTimestamp, $tz);
-            if ($tz === $systemTimeZone) {
-                $this->assertSame($systemTimeString->toString(), $timeString->toString());
-            } else {
-                $this->assertNotSame($systemTimeString->toString(), $timeString->toString());
-            }
+        $timeString = new TimeString($nowTimestamp, $tz);
+        if ($tz === $systemTimeZone) {
+            $this->assertSame($systemTimeString->toString(), $timeString->toString());
+        } else {
+            $this->assertNotSame($systemTimeString->toString(), $timeString->toString());
         }
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function fromTimestampWithTimezonesProvider(): Iterator
+    {
+        yield 'Berlin' => ['Europe/Berlin'];
+        yield 'UTC' => ['UTC'];
+        yield 'Costa Rica' => ['America/Costa_Rica'];
     }
 
     #[Test]
@@ -252,38 +266,45 @@ final class TimeStringTest extends TestCase
      * @throws Exception
      */
     #[Test]
-    public function testToTimeStamp(): void
+    #[DataProvider('toTimeStampProvider')]
+    public function testToTimeStamp(string $tz): void
     {
         $timeStamp = microtime(true);
-        $testTimeStringTimeZones = [
-            'America/Argentina/Buenos_Aires',
-            'Asia/Tokyo',
-            'UTC',
-            'Europe/Berlin'
-        ];
-        foreach ($testTimeStringTimeZones as $tz) {
-            $timeString = TimeString::fromTimeStamp($timeStamp, $tz);
-            $this->assertEquals($timeStamp, $timeString->toTimeStamp($tz));
-        }
+        $timeString = TimeString::fromTimeStamp($timeStamp, $tz);
+        $this->assertEquals($timeStamp, $timeString->toTimeStamp($tz));
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function toTimeStampProvider(): Iterator
+    {
+        yield 'Buenos Aires' => ['America/Argentina/Buenos_Aires'];
+        yield 'Tokyo' => ['Asia/Tokyo'];
+        yield 'UTC' => ['UTC'];
+        yield 'Berlin' => ['Europe/Berlin'];
     }
 
     #[Test]
-    public function testFormatWithTimeZones(): void
+    #[DataProvider('formatWithTimeZonesProvider')]
+    public function testFormatWithTimeZones(string $timeStringTimeZone): void
     {
+        $nowTimeString = TimeString::now($timeStringTimeZone);
+        $hourUTC = intval($nowTimeString->format('H', $timeStringTimeZone, 'UTC'));
+        $hourNonUTC = intval($nowTimeString->format('H', $timeStringTimeZone, '-06:00'));
+        $hourDiff = $hourUTC > $hourNonUTC ? $hourUTC - $hourNonUTC : $hourUTC - ($hourNonUTC - 24);
+        $this->assertNotSame($hourUTC, $hourNonUTC);
+        $this->assertSame(6, $hourDiff);
+    }
 
-        $testTimeStringTimeZones = [
-            'America/Argentina/Buenos_Aires',
-            'Asia/Tokyo',
-            'UTC',
-            'Europe/Berlin'
-        ];
-        foreach ($testTimeStringTimeZones as $timeStringTimeZone) {
-            $nowTimeString = TimeString::now($timeStringTimeZone);
-            $hourUTC = intval($nowTimeString->format('H', $timeStringTimeZone, 'UTC'));
-            $hourNonUTC = intval($nowTimeString->format('H', $timeStringTimeZone, '-06:00'));
-            $hourDiff = $hourUTC > $hourNonUTC ? $hourUTC - $hourNonUTC : $hourUTC - ($hourNonUTC - 24);
-            $this->assertNotSame($hourUTC, $hourNonUTC);
-            $this->assertSame(6, $hourDiff);
-        }
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function formatWithTimeZonesProvider(): Iterator
+    {
+        yield 'Buenos Aires' => ['America/Argentina/Buenos_Aires'];
+        yield 'Tokyo' => ['Asia/Tokyo'];
+        yield 'UTC' => ['UTC'];
+        yield 'Berlin' => ['Europe/Berlin'];
     }
 }
