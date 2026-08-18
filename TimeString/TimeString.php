@@ -53,7 +53,7 @@ final readonly class TimeString implements Stringable
     public function __construct(string|int|float|DateTime $var, string $timeZone = '')
     {
         if (is_string($var)) {
-            $this->theActualTimeString = self::stringToMySqlTimeString($var);
+            $this->theActualTimeString = $this->stringToMySqlTimeString($var);
             return;
         }
         if (is_int($var) || is_float($var)) {
@@ -68,7 +68,6 @@ final readonly class TimeString implements Stringable
 
     /**
      * Converts the TimeString to a string representation
-     * @return string
      */
     public function toString(): string
     {
@@ -85,9 +84,6 @@ final readonly class TimeString implements Stringable
      * precision.
      *
      * If the given time zone string is empty, the current PHP default timezone is used.
-     *
-     * @param string $timeZone
-     * @return TimeString
      */
     public static function now(string $timeZone = ''): TimeString
     {
@@ -98,10 +94,6 @@ final readonly class TimeString implements Stringable
      * Creates a TimeString with the time at the given time zone from a timestamp value.
      *
      * If the given time zone is empty, the current PHP timezone will be used.
-     *
-     * @param float $timeStamp
-     * @param string $timeZone
-     * @return TimeString
      */
     public static function fromTimeStamp(float $timeStamp, string $timeZone = ''): TimeString
     {
@@ -110,10 +102,6 @@ final readonly class TimeString implements Stringable
 
     /**
      * Converts a timestamp to a MySQL time string representation
-     *
-     * @param float $timeStamp
-     * @param string $timeZone
-     * @return string
      */
     private static function tsToMySqlTimeString(float $timeStamp, string $timeZone = ''): string
     {
@@ -133,9 +121,6 @@ final readonly class TimeString implements Stringable
 
     /**
      * Creates a TimeString from a DateTime object
-     *
-     * @param DateTime $dt
-     * @return TimeString
      */
     public static function fromDateTime(DateTime $dt): TimeString
     {
@@ -149,9 +134,6 @@ final readonly class TimeString implements Stringable
      * If the time zone is empty or is not given, the current PHP default timezone is used.
      *
      * The result is not predictable if the TimeString represents a time before the Unix epoch.
-     *
-     * @param string $timeZone
-     * @return float
      */
     public function toTimeStamp(string $timeZone = ''): float
     {
@@ -167,10 +149,6 @@ final readonly class TimeString implements Stringable
      * The given timeZone will be used to generate the TimeString if the input variable
      * is numeric (i.e., a timestamp). It will be ignored if the input variable is
      * a string.
-     *
-     * @param float|int|string|DateTime $timeVar
-     * @param string $timeZone
-     * @return TimeString
      */
     public static function fromVariable(float|int|string|DateTime $timeVar, string $timeZone = ''): TimeString
     {
@@ -180,12 +158,7 @@ final readonly class TimeString implements Stringable
         if (is_string($timeVar)) {
             return self::fromString($timeVar);
         }
-        // @phpstan-ignore-next-line
-        if (is_a($timeVar, DateTime::class)) {
-            return self::fromDateTime($timeVar);
-        }
-        // should never happen if PHP is functioning correctly
-        throw new RuntimeException("TimeString cannot be created from '$timeVar'"); // @codeCoverageIgnore
+        return self::fromDateTime($timeVar);
     }
 
 
@@ -195,16 +168,13 @@ final readonly class TimeString implements Stringable
      * at the start and end of the string will be ignored.
      *
      * Documentation on valid formats can be found at https://www.php.net/manual/en/datetime.formats.php
-     *
-     * @param string $str
-     * @return TimeString
      */
     public static function fromString(string $str): TimeString
     {
         return new TimeString($str);
     }
 
-    private static function stringToMySqlTimeString(string $str): string
+    private function stringToMySqlTimeString(string $str): string
     {
         $str = trim($str);
         if ($str === '') {
@@ -219,7 +189,7 @@ final readonly class TimeString implements Stringable
         if (preg_match('/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/', $str)) {
             $str .= '.000000';
         }
-        if (self::isValidMySqlDateTime($str)) {
+        if ($this->isValidMySqlDateTime($str)) {
             return $str;
         }
 
@@ -249,11 +219,8 @@ final readonly class TimeString implements Stringable
 
     /**
      * Returns true if the given string is a valid MySQL datetime string
-     *
-     * @param string $str
-     * @return bool
      */
-    private static function isValidMySqlDateTime(string $str): bool
+    private function isValidMySqlDateTime(string $str): bool
     {
         $matches = [];
         if (preg_match('/^\d\d\d\d-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\.\d\d\d\d\d\d$/', $str, $matches) !== 1) {
@@ -271,16 +238,11 @@ final readonly class TimeString implements Stringable
         if (intval($matches[4]) > 59) {
             return false;
         }
-        if (intval($matches[5]) > 59) {
-            return false;
-        }
-        return true;
+        return intval($matches[5]) <= 59;
     }
 
     /**
      * Encodes a timeString into a compact representation containing only numbers
-     *
-     * @return string
      */
     public function toCompactString(): string
     {
@@ -297,9 +259,6 @@ final readonly class TimeString implements Stringable
 
     /**
      * Decodes a compact string representation of a TimeString into a TimeString
-     *
-     * @param string $compactTimeString
-     * @return TimeString
      */
     public static function fromCompactString(string $compactTimeString): TimeString
     {
@@ -328,9 +287,6 @@ final readonly class TimeString implements Stringable
      * Creates a DateTime object from the TimeString with the given time zone.
      *
      * If the given time zone string is empty, the current PHP default timezone is used.
-     *
-     * @param string $timeZone
-     * @return DateTime
      */
     public function toDateTime(string $timeZone = ''): DateTime
     {
@@ -353,11 +309,6 @@ final readonly class TimeString implements Stringable
      *
      * If a formatTimeZone is given, the returned string will be a time in that timeZone. If it is
      * an empty string, the returned string will have the same time zone as the TimeString.
-     *
-     * @param string $format
-     * @param string $timeStringTimezone
-     * @param string $formatTimeZone
-     * @return string
      */
     public function format(string $format, string $timeStringTimezone = '', string $formatTimeZone = ''): string
     {
@@ -374,7 +325,6 @@ final readonly class TimeString implements Stringable
      *
      * @param string $newTimeZone the new time zone
      * @param string $timeStringTimezone if empty, the time string is assumed to be in PHP's default timezone
-     * @return TimeString
      */
     public function toNewTimeZone(string $newTimeZone, string $timeStringTimezone = ''): TimeString
     {
@@ -388,10 +338,6 @@ final readonly class TimeString implements Stringable
      * - 0 if the two TimeStrings are equal,
      * - <0 if the first TimeString is less than the second TimeString
      * - \>0 if the first TimeString is greater than the second TimeString.
-     *
-     * @param TimeString $timeString1
-     * @param TimeString $timeString2
-     * @return int
      */
     public static function cmp(TimeString $timeString1, TimeString $timeString2): int
     {
@@ -400,10 +346,6 @@ final readonly class TimeString implements Stringable
 
     /**
      * Returns true if the two TimeStrings are equal, false otherwise.
-     *
-     * @param TimeString $timeString1
-     * @param TimeString $timeString2
-     * @return bool
      */
     public static function equals(TimeString $timeString1, TimeString $timeString2): bool
     {
@@ -416,8 +358,6 @@ final readonly class TimeString implements Stringable
      *
      * This is also the latest possible time that can be represented by a `datetime(6)` column in MySQL or
      * `timestamp(6)` column in PostgreSQL.
-     *
-     * @return TimeString
      */
     public static function endOfTimes(): TimeString
     {
@@ -427,8 +367,6 @@ final readonly class TimeString implements Stringable
     /**
      * Returns a TimeString representing the earliest possible time that can be represented by a
      * `datetime(6)` column in MySQL.
-     *
-     * @return TimeString
      */
     public static function mySqlEarliestTime(): TimeString
     {
@@ -441,8 +379,6 @@ final readonly class TimeString implements Stringable
      *
      * PostgreSQL can represent BCE times with `timestamp(6)`, but TimeString does not support the
      * 'BC' postfix that PostgreSQL uses.
-     *
-     * @return TimeString
      */
     public static function postgreSqlEarliestCeTime(): TimeString
     {

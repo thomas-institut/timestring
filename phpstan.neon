@@ -2,3 +2,6 @@
 parameters:
     level: 10
     phpVersion: 80300 # Targets PHP 8.3
+    paths:
+        - TimeString
+        - test

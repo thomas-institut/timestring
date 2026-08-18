@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ThomasInstitut\TimeString;
 
 use DateTime;
@@ -9,7 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(TimeString::class)]
-class TimeStringTest extends TestCase
+final class TimeStringTest extends TestCase
 {
 
     #[Test]
@@ -26,7 +28,7 @@ class TimeStringTest extends TestCase
 
         $timeString1 = new TimeString('2019-12-21 13:45:19.123456');
         $compactTimeString1 = '20191221134519123456';
-        $this->assertEquals($compactTimeString1, $timeString1->toCompactString());
+        $this->assertSame($compactTimeString1, $timeString1->toCompactString());
         $this->assertTrue(TimeString::equals($timeString1, TimeString::fromCompactString($compactTimeString1)));
         $nIterations = 10;
 
@@ -73,7 +75,7 @@ class TimeStringTest extends TestCase
 
         foreach ($vars as $var) {
             $msg = "Test from variable: $var";
-            $this->assertEquals($nowTimeString->toString(), TimeString::fromVariable($var)->toString(), $msg);
+            $this->assertSame($nowTimeString->toString(), TimeString::fromVariable($var)->toString(), $msg);
         }
     }
 
@@ -104,7 +106,7 @@ class TimeStringTest extends TestCase
             } catch (Exception) {
                 $exceptionCaught = true;
             }
-            $this->assertEquals($expectedExceptionCaught, $exceptionCaught);
+            $this->assertSame($expectedExceptionCaught, $exceptionCaught);
         }
     }
 
@@ -210,7 +212,7 @@ class TimeStringTest extends TestCase
         $timeString1 = TimeString::fromString('2020-03-06');
 
         $this->assertEquals('2020', $timeString1->format('Y'));
-        $this->assertEquals('March', $timeString1->format('F'));
+        $this->assertSame('March', $timeString1->format('F'));
     }
 
     #[Test]
@@ -228,9 +230,9 @@ class TimeStringTest extends TestCase
         foreach ($timeZones as $tz) {
             $timeString = new TimeString($nowTimestamp, $tz);
             if ($tz === $systemTimeZone) {
-                $this->assertEquals($systemTimeString->toString(), $timeString->toString());
+                $this->assertSame($systemTimeString->toString(), $timeString->toString());
             } else {
-                $this->assertNotEquals($systemTimeString->toString(), $timeString->toString());
+                $this->assertNotSame($systemTimeString->toString(), $timeString->toString());
             }
         }
     }
@@ -280,8 +282,8 @@ class TimeStringTest extends TestCase
             $hourUTC = intval($nowTimeString->format('H', $timeStringTimeZone, 'UTC'));
             $hourNonUTC = intval($nowTimeString->format('H', $timeStringTimeZone, '-06:00'));
             $hourDiff = $hourUTC > $hourNonUTC ? $hourUTC - $hourNonUTC : $hourUTC - ($hourNonUTC - 24);
-            $this->assertNotEquals($hourUTC, $hourNonUTC);
-            $this->assertEquals(6, $hourDiff);
+            $this->assertNotSame($hourUTC, $hourNonUTC);
+            $this->assertSame(6, $hourDiff);
         }
     }
 }
